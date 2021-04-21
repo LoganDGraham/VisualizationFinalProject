@@ -9,42 +9,20 @@ from dash.dependencies import Input, Output, State
 import plotly
 import plotly.express as px
 import plotly.graph_objects as go
-import numpy as np
 import pandas as pd
-from urllib.request import urlopen
-import json
+import geopandas as gpd
 
-# tutorial geojson data
-json_data_url_tut = "https://raw.githubusercontent.com/plotly/datasets/master/\
-geojson-counties-fips.json"
+# relative path; ensure that the present script contains the data subdirectory
+data_path = "data/barris.geojson"
+gdf = gpd.read_file(data_path)
 
-# Barcelona geojson data
-json_data_url = "https://raw.githubusercontent.com/martgnz/bcn-geodata/master/\
-barris/barris.json"
-
-with urlopen(json_data_url) as response:
-    barris = json.load(response)
-
-# tutorial csv data
-csv_data_url_tut = "https://raw.githubusercontent.com/plotly/datasets/master/\
-fips-unemp-16.csv"
-df = pd.read_csv(csv_data_url_tut, dtype={"fips": str})
-
-#fig_tut = px.choropleth_mapbox(geojson=counties, locations='fips',
-#                           color='unemp',
-#                           color_continuous_scale="Viridis",
-#                           range_color=(0, 12),
-#                           mapbox_style="carto-positron",
-#                           zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
-#                           opacity=0.5,
-#                           labels={'unemp':'unemployment rate'}
-#                          )
-
-fig = px.choropleth_mapbox(geojson=barris,
-                           mapbox_style="carto-positron",
-                           zoom=3,
+# draw map
+fig = px.choropleth_mapbox(geojson=gdf.geometry,
+                           locations=gdf.index,
                            opacity=0.5,
-                          )
+                           center={"lat": 41.3915, "lon": 2.1734},
+                           mapbox_style="open-street-map",
+                           zoom=10)
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
