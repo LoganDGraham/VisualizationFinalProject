@@ -14,27 +14,39 @@ import pandas as pd
 from urllib.request import urlopen
 import json
 
-json_data_url = "https://raw.githubusercontent.com/plotly/datasets/master/\
+# tutorial geojson data
+json_data_url_tut = "https://raw.githubusercontent.com/plotly/datasets/master/\
 geojson-counties-fips.json"
 
+# Barcelona geojson data
+json_data_url = "https://raw.githubusercontent.com/martgnz/bcn-geodata/master/\
+barris/barris.json"
+
 with urlopen(json_data_url) as response:
-    counties = json.load(response)
+    barris = json.load(response)
 
-csv_data_url = "https://raw.githubusercontent.com/plotly/datasets/master/\
+# tutorial csv data
+csv_data_url_tut = "https://raw.githubusercontent.com/plotly/datasets/master/\
 fips-unemp-16.csv"
-df = pd.read_csv(csv_data_url, dtype={"fips": str})
+df = pd.read_csv(csv_data_url_tut, dtype={"fips": str})
 
-fig = px.choropleth_mapbox(df, geojson=counties, locations='fips',
-                           color='unemp',
-                           color_continuous_scale="Viridis",
-                           range_color=(0, 12),
+#fig_tut = px.choropleth_mapbox(geojson=counties, locations='fips',
+#                           color='unemp',
+#                           color_continuous_scale="Viridis",
+#                           range_color=(0, 12),
+#                           mapbox_style="carto-positron",
+#                           zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
+#                           opacity=0.5,
+#                           labels={'unemp':'unemployment rate'}
+#                          )
+
+fig = px.choropleth_mapbox(geojson=barris,
                            mapbox_style="carto-positron",
-                           zoom=3, center = {"lat": 37.0902, "lon": -95.7129},
+                           zoom=3,
                            opacity=0.5,
-                           labels={'unemp':'unemployment rate'}
                           )
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
