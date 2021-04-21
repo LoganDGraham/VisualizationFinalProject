@@ -53,10 +53,10 @@ fig_corr.update_layout(
     margin_b=margin_val
 )
 
-fig_scatter=px.scatter(x=df['number car accidents'],y=df['average monthly rent'],size=df['total population'],color=df['district name'],hover_name=df['neighborhood name'])
+fig_scatter=px.scatter(x=df['number car accidents'],y=df['unemployment rate'],size=df['total population'],color=df['district name'],hover_name=df['neighborhood name'])
 fig_scatter.update_layout(
     xaxis_title='number car accidents',
-    yaxis_title='average monthly rent',
+    yaxis_title='unemployment rate',
     showlegend=False,
     height=0.5*h_max,
     margin_l=margin_val,
@@ -85,17 +85,17 @@ app.layout = html.Div([
             ],style={'width':'50%','display':'inline-block'}),
         html.Div([
             html.Div([dcc.Graph(figure=fig_hist)],style={'width':'50%','display':'inline-block'}),
-            html.Div([dcc.Graph(figure=fig_corr)],style={'width':'50%','display':'inline-block'}),
+            html.Div([html.P(['Most correlated features:',html.Br(),'- number public transit stops',html.Br(),'- number bus stops',html.Br(),'- total population',html.Br(),html.Br(),'Least correlated features:',html.Br(),'- unemployment rate',html.Br(),'- female life expectancy',html.Br(),'- birth rate',html.Br(),html.Br(),html.Br()],id='my-p-element')], style={'width':'50%','display':'inline-block','height':'0.4*h_max'}),
             html.Div([
                     html.Div([dcc.Dropdown(
                             id='drop-2',
                             options=[{'label':i,'value':i} for i in feature_names],
-                            value='average monthly rent')],style={'width':'60%','display':'inline-block'}),
+                            value='unemployment rate')],style={'width':'60%','display':'inline-block'}),
                     html.Div([dcc.RadioItems(
                             id='btn-2',
-                            options=[{'label':'x axis','value':'xaxis'},{'label':'y axis','value':'yaxis'},],
+                            options=[{'label':'x-axis','value':'xaxis'},{'label':'y-axis','value':'yaxis'},],
                             value='yaxis')],style={'width':'40%', 'display':'inline-block'})
-                    ],style={'width':'100%','display':'inline-block','padding-left':'11%'}),
+                    ],style={'width':'100%','display':'inline-block','padding-left':'10%'}),
             html.Div([dcc.Graph(figure=fig_scatter)],style={'width':'100%','display':'inline-block'})
             ],style={'width':'50%','height':'200','display':'inline-block'}),
 
