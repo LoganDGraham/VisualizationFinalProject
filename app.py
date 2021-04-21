@@ -87,7 +87,6 @@ app.layout = html.Div([
             html.Div([dcc.Graph(figure=fig_hist)],style={'width':'50%','display':'inline-block'}),
             html.Div([dcc.Graph(figure=fig_corr)],style={'width':'50%','display':'inline-block'}),
             html.Div([
-                html.Div([dcc.Graph(figure=fig_scatter)],style={'width':'100%','display':'inline-block'}),
                     html.Div([dcc.Dropdown(
                             id='drop-2',
                             options=[{'label':i,'value':i} for i in feature_names],
@@ -96,7 +95,10 @@ app.layout = html.Div([
                             id='btn-2',
                             options=[{'label':'x axis','value':'xaxis'},{'label':'y axis','value':'yaxis'},],
                             value='yaxis')],style={'width':'40%', 'display':'inline-block'})
-                    ],style={'width':'100%','display':'inline-block'})],style={'width':'50%','height':'200','display':'inline-block'})
+                    ],style={'width':'100%','display':'inline-block','padding-left':'11%'}),
+            html.Div([dcc.Graph(figure=fig_scatter)],style={'width':'100%','display':'inline-block'})
+            ],style={'width':'50%','height':'200','display':'inline-block'}),
+
         ])
 ])
 
