@@ -4,6 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
+import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 from sklearn.decomposition import PCA
@@ -19,8 +20,8 @@ margin_val = 30
 df = pd.read_csv('data.csv')
 feature_names = df.drop(['neighborhood code','neighborhood name','district name'], axis=1).head()
 
-fig_map=px.scatter(df['total population'],df['average monthly rent'],hover_name=df['neighborhood name'])
-fig_map.update_layout(
+fig_scatter=px.scatter(df['total population'],df['average monthly rent'],hover_name=df['neighborhood name'])
+fig_scatter.update_layout(
     xaxis_title='component 1',
     yaxis_title='component 2',
     height=h_max,
@@ -28,6 +29,29 @@ fig_map.update_layout(
     margin_r=margin_val,
     margin_t=margin_val,
     margin_b=margin_val
+)
+
+# relative path; ensure that the present script contains the data subdirectory
+data_path = "data/barris.geojson"
+gdf = gpd.read_file(data_path)
+gdf.rename(columns={"NOM": "neighborhood name"}, inplace=True)
+df_merged = pd.merge(gdf, df, on="neighborhood name")
+
+# draw map
+fig_map = px.choropleth_mapbox(geojson=df_merged.geometry,
+                           locations=df_merged.index,
+                           color=df_merged["number car accidents"],
+                           opacity=0.5,
+                           center={"lat": 41.3915, "lon": 2.1734},
+                           mapbox_style="open-street-map",
+                           zoom=10.5,
+                           labels={"color": "Car Accidents"})
+fig_map.update_layout(
+    height=h_max,
+    margin_l=margin_val,
+    margin_r=margin_val,
+    margin_t=margin_val,
+    margin_b=margin_val   
 )
 
 fig_hist=px.histogram(df['number car accidents'])
