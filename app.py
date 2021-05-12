@@ -17,7 +17,7 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 h_max = 550
 margin_val = 30
 
-df = pd.read_csv('data.csv')
+df = pd.read_csv("data/data.csv")
 feature_names = df.drop(['neighborhood code','neighborhood name','district name'], axis=1).head()
 
 fig_scatter=px.scatter(df['total population'],df['average monthly rent'],hover_name=df['neighborhood name'])
@@ -34,14 +34,18 @@ fig_scatter.update_layout(
 # relative path; ensure that the present script contains the data subdirectory
 data_path = "data/barris.geojson"
 gdf = gpd.read_file(data_path)
-gdf.rename(columns={"NOM": "neighborhood name"}, inplace=True)
-df_merged = pd.merge(gdf, df, on="neighborhood name")
+gdf.rename(columns={"NOM": "neighborhood name", "BARRI": "neighborhood code"},
+           inplace=True)
+gdf["neighborhood code"] = gdf["neighborhood code"].apply(int)
+
+df_merged = pd.merge(gdf, df, on="neighborhood code").set_index(
+    "neighborhood code")
 
 # draw map
 fig_map = px.choropleth_mapbox(geojson=df_merged.geometry,
                            locations=df_merged.index,
-                           color=df_merged["number car accidents"],
-                           opacity=0.5,
+                           color=df_merged["district name"],
+                           opacity=0.65,
                            center={"lat": 41.3915, "lon": 2.1734},
                            mapbox_style="open-street-map",
                            zoom=10.5,
@@ -51,7 +55,7 @@ fig_map.update_layout(
     margin_l=margin_val,
     margin_r=margin_val,
     margin_t=margin_val,
-    margin_b=margin_val   
+    margin_b=margin_val
 )
 
 fig_hist=px.histogram(df['number car accidents'])
@@ -127,4 +131,4 @@ app.layout = html.Div([
 ])
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
