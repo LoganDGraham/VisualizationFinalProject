@@ -17,53 +17,22 @@ df = pd.read_csv("data/data.csv")
 feature_names = df.drop(['neighborhood code','neighborhood name',
                          'district name'], axis=1).head()
 
-#fig_scatter=px.scatter(df['total population'], df['average monthly rent'],
-#                       hover_name=df['neighborhood name'])
-#fig_scatter.update_layout(
-#    xaxis_title='component 1',
-#    yaxis_title='component 2',
-#    height=h_max,
-#    margin_l=margin_val,
-#    margin_r=margin_val,
-#    margin_t=margin_val,
-#    margin_b=margin_val
-#)
-
 # relative path; ensure that the present script contains the data subdirectory
 data_path = "data/barris.geojson"
 gdf = gpd.read_file(data_path)
-gdf.rename(columns={"NOM": "neighborhood name", "BARRI": "neighborhood code"},
-           inplace=True)
+gdf.rename(columns={"BARRI": "neighborhood code"}, inplace=True)
 gdf["neighborhood code"] = gdf["neighborhood code"].apply(int)
 df_merged = pd.merge(gdf, df, on="neighborhood code").set_index(
     "neighborhood code")
 
-# histogram
-fig_hist=px.histogram(df['number car accidents'])
-fig_hist.update_layout(
-    xaxis_title='number car accidents',
-    yaxis_title='counts',
-    showlegend=False,
-    height=0.4*h_max,
-    margin_l=margin_val,
-    margin_r=margin_val,
-    margin_t=margin_val,
-    margin_b=margin_val
-)
+# categorical variables
+categorical_vars = set(["most common age range immigrants",
+                        "most common immigrant origin",
+                        "most common age range emigrants",
+                        "month most unemployment",
+                        "most common car accident day"])
 
-fig_corr=px.scatter(df['total population'],
-                    df['average monthly rent'],
-                    hover_name=df['neighborhood name'])
-fig_corr.update_layout(
-    xaxis_title='component 1',
-    yaxis_title='component 2',
-    height=0.4*h_max,
-    margin_l=margin_val,
-    margin_r=margin_val,
-    margin_t=margin_val,
-    margin_b=margin_val
-)
-
+# main app
 app.layout = html.Div([
     html.Div([
         html.H2("Exploring the Features and Neighborhoods of Barcelona",
@@ -81,7 +50,7 @@ app.layout = html.Div([
             html.Div([dcc.Graph(id="map")])
             ],style={'width':'50%','display':'inline-block'}),
         html.Div([
-            html.Div([dcc.Graph(figure=fig_hist)],
+            html.Div([dcc.Graph(id="hist_bar")],
                      style={'width':'50%','display':'inline-block'}),
             html.Div([html.P(['Most correlated features:',
                               html.Br(),
@@ -132,15 +101,19 @@ app.layout = html.Div([
     Input("drop-1", "value")
 )
 def update_map(dropdown_val):
+    df_merged["map_text"] = df_merged["neighborhood name"] + "<br>" + \
+            dropdown_val + " = " + str(df_merged[dropdown_val])
     # draw map
-    fig_map = px.choropleth_mapbox(geojson=df_merged.geometry,
+    fig_map = px.choropleth_mapbox(df_merged,
+                                   geojson=df_merged.geometry,
                                    locations=df_merged.index,
-                                   color=df_merged[dropdown_val],
+                                   color=dropdown_val,
                                    opacity=0.65,
                                    center={"lat": 41.3915, "lon": 2.1734},
                                    mapbox_style="open-street-map",
                                    zoom=10.5,
-                                   labels={"color": dropdown_val})
+                                   labels={"color": dropdown_val},
+                                   hover_data=["neighborhood name"])
 
     # layout
     fig_map.update_layout(
@@ -168,12 +141,12 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val):
         # first dropdown selects x variable, second dropdown selects y
         x, y = dropdown1_val, dropdown2_val
 
-    fig_scatter = px.scatter(df,
+    fig_scatter = px.scatter(df_merged,
                              x=x,
                              y=y,
-                             size=df['total population'],
-                             color=df['district name'],
-                             hover_name=df['neighborhood name'])
+                             size="total population",
+                             color="district name"
+                            )
 
     # layout
     fig_scatter.update_layout(
@@ -188,6 +161,38 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val):
     )
 
     return fig_scatter
+
+@app.callback(
+    Output("hist_bar", "figure"),
+    Input("drop-1", "value")
+)
+def update_hist_bar(dropdown_val):
+    # barchart
+    if dropdown_val in categorical_vars:
+        fig_hist_bar = px.bar(df_merged,
+                              x=dropdown_val,
+                              color_discrete_sequence=["red"],
+                              #color="neighborhood name",
+                              #hover_data=df_merged.columns
+                             )
+    # histogram
+    else:
+        fig_hist_bar = px.histogram(df_merged,
+                                    x=dropdown_val,
+                                    color_discrete_sequence=["red"],
+                                    opacity=0.5)
+        fig_hist_bar.update_layout(
+            xaxis_title=dropdown_val,
+            yaxis_title='counts',
+            showlegend=False,
+            height=0.4*h_max,
+            margin_l=margin_val,
+            margin_r=margin_val,
+            margin_t=margin_val,
+            margin_b=margin_val
+        )
+
+    return fig_hist_bar
 
 if __name__ == '__main__':
     app.run_server(debug=True)
