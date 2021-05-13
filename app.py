@@ -35,15 +35,15 @@ categorical_vars = set(["most common age range immigrants",
 # main app
 app.layout = html.Div([
     html.Div([
-        html.H2("Exploring the Features and Neighborhoods of Barcelona",
-                style={"textAlign": "center"})
+        html.H1("Exploring the Features and Neighborhoods of Barcelona",
+                style={'font-family': 'Arial',"textAlign": "center"})
         ]),
     html.Div([
         html.Div([dcc.Dropdown(
                 id='drop-1',
                 options=[{'label': i, 'value': i} for i in feature_names],
                 value='number car accidents')],
-            style={'width':'60%','display':'inline-block'}),
+            style={'font-family': 'Arial','width':'50%','display':'inline-block'}),
         ]),
     html.Div([
         html.Div([
@@ -51,7 +51,7 @@ app.layout = html.Div([
             ],style={'width':'50%','display':'inline-block'}),
         html.Div([
             html.Div([dcc.Graph(id="hist_bar")],
-                     style={'width':'50%','display':'inline-block'}),
+                     style={'font-family': 'Arial','width':'50%','display':'inline-block'}),
             html.Div([html.P(['Most correlated features:',
                               html.Br(),
                               '- number public transit stops',
@@ -68,7 +68,7 @@ app.layout = html.Div([
                               html.Br(),'- birth rate',
                               html.Br(),html.Br(),html.Br()],
                              id='my-p-element')],
-                     style={'width':'50%',
+                     style={'font-family':'Arial','width':'50%',
                             'display':'inline-block',
                             'height':'0.4*h_max'}),
             html.Div([
@@ -77,19 +77,19 @@ app.layout = html.Div([
                             options=[
                                 {'label':i,'value':i} for i in feature_names],
                             value='unemployment rate')],
-                        style={'width':'60%','display':'inline-block'}),
+                        style={'font-family':'Arial','width':'60%','display':'inline-block'}),
                     html.Div([dcc.RadioItems(
                             id="radio",
                             options=[{"label":"x-axis","value":"x"},
                                      {"label":"y-axis","value":"y"},],
                             value="y")],
-                        style={'width':'40%', 'display':'inline-block'})
+                        style={'font-family': 'Arial','width':'40%', 'display':'inline-block'})
                     ],
                 style={'width':'100%',
                        'display':'inline-block',
                        'padding-left':'10%'}),
             html.Div([dcc.Graph(id="scatter")],
-                     style={'width':'100%','display':'inline-block'})
+                     style={'font-family': 'Arial','width':'100%','display':'inline-block'})
             ],
             style={'width':'50%','height':'200','display':'inline-block'}),
         ])
@@ -110,10 +110,13 @@ def update_map(dropdown_val):
                                    color=dropdown_val,
                                    opacity=0.65,
                                    center={"lat": 41.3915, "lon": 2.1734},
-                                   mapbox_style="open-street-map",
+                                   mapbox_style="carto-positron",
                                    zoom=10.5,
-                                   labels={"color": dropdown_val},
-                                   hover_data=["neighborhood name"])
+                                   labels={"color":dropdown_val},
+                                   hover_name="neighborhood name")
+                                   # hover_data=["neighborhood name"])
+
+    fig_map.update_traces(hoverinfo="z",selector=dict(type='choropleth'))
 
     # layout
     fig_map.update_layout(
@@ -121,7 +124,10 @@ def update_map(dropdown_val):
         margin_l=margin_val,
         margin_r=margin_val,
         margin_t=margin_val,
-        margin_b=margin_val
+        margin_b=margin_val,
+        showlegend=False,
+        coloraxis_showscale=False,
+        hoverlabel=dict(bgcolor="white",font_size=12,font_family="Arial")
     )
 
     return fig_map
@@ -130,8 +136,8 @@ def update_map(dropdown_val):
 @app.callback(
     Output("scatter", "figure"),
     Input("drop-2", "value"),
-    State("radio", "value"),
-    State("drop-1", "value")
+    Input("radio", "value"),
+    Input("drop-1", "value")
 )
 def update_scatter(dropdown2_val, radio_val, dropdown1_val):
     if radio_val == "x":
@@ -145,7 +151,8 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val):
                              x=x,
                              y=y,
                              size="total population",
-                             color="district name"
+                             color="district name",
+                             hover_name="neighborhood name"
                             )
 
     # layout
@@ -157,7 +164,8 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val):
         margin_l=margin_val,
         margin_r=margin_val,
         margin_t=margin_val,
-        margin_b=margin_val
+        margin_b=margin_val,
+        hoverlabel=dict(font_size=12,font_family="Arial")
     )
 
     return fig_scatter
@@ -195,4 +203,4 @@ def update_hist_bar(dropdown_val):
     return fig_hist_bar
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
