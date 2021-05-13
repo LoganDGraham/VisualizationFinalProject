@@ -179,16 +179,16 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val, map_hover):
     if map_hover:
         # highlight based on map_hover
         nbd_code = map_hover["points"][0]["location"]
+
         fig_scatter.add_trace(
-            go.Scatter(
-                #df_merged.loc[df_merged["neighborhood code"] == nbd_code],
-                mode="markers",
-                x=df_merged.loc[df_merged["nbd code"] == nbd_code][x],
-                y=df_merged.loc[df_merged["nbd code"] == nbd_code][y],
-                marker_line=dict(width=2)
-            )
+            go.Scatter(mode="markers",
+                       marker = dict(
+                           symbol="x",
+                           color="black",
+                           size=12),
+                       x=df_merged.loc[df_merged["nbd code"] == nbd_code][x],
+                       y=df_merged.loc[df_merged["nbd code"] == nbd_code][y])
         )
-        #print(df_merged.loc[df_merged["nbd code"] == nbd_code][x])
 
     # layout
     fig_scatter.update_layout(
@@ -200,7 +200,8 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val, map_hover):
         margin_r=margin_val,
         margin_t=margin_val,
         margin_b=margin_val,
-        hoverlabel=dict(font_size=12,font_family="Arial")
+        hoverlabel=dict(font_size=12,font_family="Arial"),
+        clickmode="event+select"
     )
 
     return fig_scatter
