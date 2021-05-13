@@ -59,22 +59,16 @@ app.layout = html.Div([
             html.Div([dcc.Graph(id="hist_bar")],
                      style={'font-family': 'Arial','width':'50%',
                             'display':'inline-block'}),
-            html.Div([html.P(['Most correlated features:',
-                              html.Br(),
-                              '- number public transit stops',
-                              html.Br(),
-                              '- number bus stops',
-                              html.Br(),
-                              '- total population',
-                              html.Br(),html.Br(),
-                              'Least correlated features:',
-                              html.Br(),
-                              '- unemployment rate',
-                              html.Br(),
-                              '- female life expectancy',
-                              html.Br(),'- birth rate',
-                              html.Br(),html.Br(),html.Br()],
-                             id='my-p-element')],
+            html.Div([html.P(['Most correlated features:'],
+                             id='my-p-element1'),
+                    html.Table([
+                        html.Tr([html.Td(['x']), html.Td(id='square')]),
+                        html.Tr([html.Td(['x']), html.Td(id='cube')])]),
+                    html.P(['Least correlated features:'],id='my-p-element2'),
+                    html.Table([
+                        html.Tr([html.Td(['x']), html.Td(id='square1')]),
+                        html.Tr([html.Td(['x']), html.Td(id='cube1')])]),
+                    html.P([html.Br(),html.Br()])],
                      style={'font-family':'Arial','width':'50%',
                             'display':'inline-block',
                             'height':'0.4*h_max'}),
@@ -249,6 +243,8 @@ def update_hist_bar(dropdown_val, map_hover):
 
     return fig_hist_bar
 
+# text callback
+
 # for debugging purposes
 #@app.callback(
 #    Output("hover_data", "children"),
@@ -265,4 +261,4 @@ def update_hist_bar(dropdown_val, map_hover):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
