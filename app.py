@@ -107,11 +107,11 @@ app.layout = html.Div([
         html.Div(className="row", children=[
             html.Div([
                 dcc.Markdown("""
-                    **Hover Data**
+                    **Click Data (for debugging purposes)**
 
-                    Mouse over values in the map.
+                    Click a dot in the scatter plot.
                 """),
-                html.Pre(id="hover_data")
+                html.Pre(id="click_data")
             ], className="three columns")
         ])
 ])
@@ -119,22 +119,33 @@ app.layout = html.Div([
 # map callback
 @app.callback(
     Output("map", "figure"),
-    Input("drop-1", "value")
+    Input("drop-1", "value"),
+    Input("scatter", "clickData")
 )
-def update_map(dropdown_val):
-    df_merged["map_text"] = df_merged["neighborhood name"] + "<br>" + \
-            dropdown_val + " = " + str(df_merged[dropdown_val])
-    # draw map
-    fig_map = px.choropleth_mapbox(df_merged,
-                                   geojson=df_merged.geometry,
-                                   locations=df_merged.index,
-                                   color=dropdown_val,
-                                   opacity=0.65,
-                                   center={"lat": 41.3915, "lon": 2.1734},
-                                   mapbox_style="carto-positron",
-                                   zoom=10.5,
-                                   labels={"color":dropdown_val},
-                                   hover_name="neighborhood name")
+def update_map(dropdown_val, scatter_click):
+    if scatter_click:
+        df_clicked = df_merged.loc[df_merged["nbd code"] == scatter_click["points"][0]["customdata"][0]]
+        fig_map = px.choropleth_mapbox(df_clicked,
+                                       geojson=df_clicked.geometry,
+                                       locations=df_clicked.index,
+                                       color=dropdown_val,
+                                       opacity=0.65,
+                                       center={"lat": 41.3915, "lon": 2.1734},
+                                       mapbox_style="carto-positron",
+                                       zoom=10.5,
+                                       labels={"color":dropdown_val},
+                                       hover_name="neighborhood name")
+    else:
+        fig_map = px.choropleth_mapbox(df_merged,
+                                       geojson=df_merged.geometry,
+                                       locations=df_merged.index,
+                                       color=dropdown_val,
+                                       opacity=0.65,
+                                       center={"lat": 41.3915, "lon": 2.1734},
+                                       mapbox_style="carto-positron",
+                                       zoom=10.5,
+                                       labels={"color":dropdown_val},
+                                       hover_name="neighborhood name")
 
     fig_map.update_traces(hoverinfo="z",selector=dict(type='choropleth'))
 
@@ -171,6 +182,7 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val, map_hover):
     fig_scatter = px.scatter(df_merged,
                              x=x,
                              y=y,
+                             custom_data=["nbd code"],
                              size="total population",
                              color="district name",
                              hover_name="neighborhood name"
@@ -238,12 +250,19 @@ def update_hist_bar(dropdown_val, map_hover):
     return fig_hist_bar
 
 # for debugging purposes
+#@app.callback(
+#    Output("hover_data", "children"),
+#    Input("map", "hoverData")
+#)
+#def display_hover_data(map_hover):
+#    return json.dumps(map_hover, indent=2)
 @app.callback(
-    Output("hover_data", "children"),
-    Input("map", "hoverData")
+    Output("click_data", "children"),
+    Input("scatter", "clickData")
 )
-def display_hover_data(map_hover):
-    return json.dumps(map_hover, indent=2)
+def display_click_data(scatter_click):
+    return json.dumps(scatter_click, indent=2)
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
