@@ -1,11 +1,14 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 import geopandas as gpd
 import numpy as np
+# for debugging purposes
+import json
 
 external_stylesheets = ['stylesheet.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -22,6 +25,7 @@ data_path = "data/barris.geojson"
 gdf = gpd.read_file(data_path)
 gdf.rename(columns={"BARRI": "neighborhood code"}, inplace=True)
 gdf["neighborhood code"] = gdf["neighborhood code"].apply(int)
+gdf["nbd code"] = gdf["neighborhood code"]
 df_merged = pd.merge(gdf, df, on="neighborhood code").set_index(
     "neighborhood code")
 
@@ -42,8 +46,9 @@ app.layout = html.Div([
         html.Div([dcc.Dropdown(
                 id='drop-1',
                 options=[{'label': i, 'value': i} for i in feature_names],
-                value='number car accidents')],
-            style={'font-family': 'Arial','width':'50%','display':'inline-block'}),
+                value='total population')],
+            style={'font-family': 'Arial','width':'50%',
+                   'display':'inline-block'}),
         ]),
     html.Div([
         html.Div([
@@ -51,7 +56,8 @@ app.layout = html.Div([
             ],style={'width':'50%','display':'inline-block'}),
         html.Div([
             html.Div([dcc.Graph(id="hist_bar")],
-                     style={'font-family': 'Arial','width':'50%','display':'inline-block'}),
+                     style={'font-family': 'Arial','width':'50%',
+                            'display':'inline-block'}),
             html.Div([html.P(['Most correlated features:',
                               html.Br(),
                               '- number public transit stops',
@@ -77,21 +83,36 @@ app.layout = html.Div([
                             options=[
                                 {'label':i,'value':i} for i in feature_names],
                             value='unemployment rate')],
-                        style={'font-family':'Arial','width':'60%','display':'inline-block'}),
+                        style={'font-family':'Arial','width':'60%',
+                               'display':'inline-block'}),
                     html.Div([dcc.RadioItems(
                             id="radio",
                             options=[{"label":"x-axis","value":"x"},
                                      {"label":"y-axis","value":"y"},],
                             value="y")],
-                        style={'font-family': 'Arial','width':'40%', 'display':'inline-block'})
+                        style={'font-family': 'Arial','width':'40%',
+                               'display':'inline-block'})
                     ],
                 style={'width':'100%',
                        'display':'inline-block',
                        'padding-left':'10%'}),
             html.Div([dcc.Graph(id="scatter")],
-                     style={'font-family': 'Arial','width':'100%','display':'inline-block'})
+                     style={'font-family': 'Arial','width':'100%',
+                            'display':'inline-block'})
             ],
             style={'width':'50%','height':'200','display':'inline-block'}),
+        ]),
+
+        # for debugging purposes
+        html.Div(className="row", children=[
+            html.Div([
+                dcc.Markdown("""
+                    **Hover Data**
+
+                    Mouse over values in the map.
+                """),
+                html.Pre(id="hover_data")
+            ], className="three columns")
         ])
 ])
 
@@ -114,7 +135,6 @@ def update_map(dropdown_val):
                                    zoom=10.5,
                                    labels={"color":dropdown_val},
                                    hover_name="neighborhood name")
-                                   # hover_data=["neighborhood name"])
 
     fig_map.update_traces(hoverinfo="z",selector=dict(type='choropleth'))
 
@@ -137,9 +157,10 @@ def update_map(dropdown_val):
     Output("scatter", "figure"),
     Input("drop-2", "value"),
     Input("radio", "value"),
-    Input("drop-1", "value")
+    Input("drop-1", "value"),
+    Input("map", "hoverData")
 )
-def update_scatter(dropdown2_val, radio_val, dropdown1_val):
+def update_scatter(dropdown2_val, radio_val, dropdown1_val, map_hover):
     if radio_val == "x":
         # second dropdown selects x variable, first dropdown selects y
         x, y = dropdown2_val, dropdown1_val
@@ -154,6 +175,21 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val):
                              color="district name",
                              hover_name="neighborhood name"
                             )
+
+    if map_hover:
+        # highlight based on map_hover
+        nbd_code = map_hover["points"][0]["location"]
+        fig_scatter.add_trace(
+            go.Scatter(
+                #df_merged.loc[df_merged["neighborhood code"] == nbd_code],
+                mode="markers",
+                x=[df_merged.loc[df_merged["nbd code"] == nbd_code][x]],
+                y=[df_merged.loc[df_merged["nbd code"] == nbd_code][y]],
+                marker=dict(size=12,
+                    line=dict(color="black", width=2))
+            )
+        )
+        #print([df_merged.loc[df_merged["nbd code"] == nbd_code][x]])
 
     # layout
     fig_scatter.update_layout(
@@ -172,16 +208,15 @@ def update_scatter(dropdown2_val, radio_val, dropdown1_val):
 
 @app.callback(
     Output("hist_bar", "figure"),
-    Input("drop-1", "value")
+    Input("drop-1", "value"),
+    Input("map", "hoverData")
 )
-def update_hist_bar(dropdown_val):
+def update_hist_bar(dropdown_val, map_hover):
     # barchart
     if dropdown_val in categorical_vars:
         fig_hist_bar = px.bar(df_merged,
                               x=dropdown_val,
-                              color_discrete_sequence=["red"],
-                              #color="neighborhood name",
-                              #hover_data=df_merged.columns
+                              color_discrete_sequence=["red"]
                              )
     # histogram
     else:
@@ -202,5 +237,13 @@ def update_hist_bar(dropdown_val):
 
     return fig_hist_bar
 
+# for debugging purposes
+@app.callback(
+    Output("hover_data", "children"),
+    Input("map", "hoverData")
+)
+def display_hover_data(map_hover):
+    return json.dumps(map_hover, indent=2)
+
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
