@@ -34,7 +34,8 @@ categorical_vars = set(["most common age range immigrants",
                         "most common immigrant origin",
                         "most common age range emigrants",
                         "month most unemployment",
-                        "most common car accident day"])
+                        "most common car accident day",
+                        "leading cause of car accidents"])
 
 # main app
 app.layout = html.Div([
@@ -52,7 +53,7 @@ app.layout = html.Div([
         ]),
     html.Div([
         html.Div([
-            html.Div([dcc.Graph(id="map")])
+            html.Div([dcc.Graph(id="map", clear_on_unhover=True)])
             ],style={'width':'50%','display':'inline-block'}),
         html.Div([
             html.Div([dcc.Graph(id="hist_bar")],
@@ -102,7 +103,6 @@ app.layout = html.Div([
             ],
             style={'width':'50%','height':'200','display':'inline-block'}),
         ]),
-
         # for debugging purposes
         #html.Div(className="row", children=[
         #    html.Div([
