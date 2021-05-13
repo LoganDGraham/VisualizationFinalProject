@@ -96,7 +96,7 @@ app.layout = html.Div([
                 style={'width':'100%',
                        'display':'inline-block',
                        'padding-left':'10%'}),
-            html.Div([dcc.Graph(id="scatter")],
+            html.Div([dcc.Graph(id="scatter", clear_on_unhover=True)],
                      style={'font-family': 'Arial','width':'100%',
                             'display':'inline-block'})
             ],
@@ -104,30 +104,30 @@ app.layout = html.Div([
         ]),
 
         # for debugging purposes
-        html.Div(className="row", children=[
-            html.Div([
-                dcc.Markdown("""
-                    **Click Data (for debugging purposes)**
+        #html.Div(className="row", children=[
+        #    html.Div([
+        #        dcc.Markdown("""
+        #            **Click Data (for debugging purposes)**
 
-                    Click a dot in the scatter plot.
-                """),
-                html.Pre(id="click_data")
-            ], className="three columns")
-        ])
+        #            Click a dot in the scatter plot.
+        #        """),
+        #        html.Pre(id="click_data")
+        #    ], className="three columns")
+        #])
 ])
 
 # map callback
 @app.callback(
     Output("map", "figure"),
     Input("drop-1", "value"),
-    Input("scatter", "clickData")
+    Input("scatter", "hoverData")
 )
-def update_map(dropdown_val, scatter_click):
-    if scatter_click:
-        df_clicked = df_merged.loc[df_merged["nbd code"] == scatter_click["points"][0]["customdata"][0]]
-        fig_map = px.choropleth_mapbox(df_clicked,
-                                       geojson=df_clicked.geometry,
-                                       locations=df_clicked.index,
+def update_map(dropdown_val, scatter_hover):
+    if scatter_hover:
+        df_hovered = df_merged.loc[df_merged["nbd code"] == scatter_hover["points"][0]["customdata"][0]]
+        fig_map = px.choropleth_mapbox(df_hovered,
+                                       geojson=df_hovered.geometry,
+                                       locations=df_hovered.index,
                                        color=dropdown_val,
                                        opacity=0.65,
                                        center={"lat": 41.3915, "lon": 2.1734},
@@ -256,12 +256,12 @@ def update_hist_bar(dropdown_val, map_hover):
 #)
 #def display_hover_data(map_hover):
 #    return json.dumps(map_hover, indent=2)
-@app.callback(
-    Output("click_data", "children"),
-    Input("scatter", "clickData")
-)
-def display_click_data(scatter_click):
-    return json.dumps(scatter_click, indent=2)
+#@app.callback(
+#    Output("click_data", "children"),
+#    Input("scatter", "clickData")
+#)
+#def display_click_data(scatter_click):
+#    return json.dumps(scatter_click, indent=2)
 
 
 if __name__ == '__main__':
