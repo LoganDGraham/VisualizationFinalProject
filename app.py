@@ -35,7 +35,34 @@ categorical_vars = set(["most common age range immigrants",
                         "most common age range emigrants",
                         "month most unemployment",
                         "most common car accident day",
-                        "leading cause of car accidents"])
+                        "leading cause of car accidents",
+                        "nbd code"])
+
+quant_vars = set(["average tax revenue by person",
+                  "average monthly rent",
+                  "total population",
+                  "average number residents per home",
+                  "female life expectancy",
+                  "male life expectancy",
+                  "birth rate",
+                  "mortality rate",
+                  "number elder care homes",
+                  "number hospitals",
+                  "immigration rate",
+                  "emigration rate",
+                  "unemployment rate",
+                  "number bus stops",
+                  "number public transport stops",
+                  "number car accidents",
+                  "number shopping galleries",
+                  "number state administration facilities",
+                  "number cemeteries",
+                  "number police stations",
+                  "number street trees",
+                  "number hotels",
+                  "number music and dance venues",
+                  "number libraries and museums",
+                  "number places of worship"])
 
 # main app
 app.layout = html.Div([
@@ -62,13 +89,13 @@ app.layout = html.Div([
             html.Div([html.P(['Most correlated features:'],
                              id='my-p-element1'),
                     html.Table([
-                        html.Tr([html.Td(['x']), html.Td(id='square')]),
-                        html.Tr([html.Td(['x']), html.Td(id='cube')])]),
+                        html.Tr([html.Td(id="pos_cor1")]),
+                        html.Tr([html.Td(id="pos_cor2")])]),
                     html.P(['Least correlated features:'],id='my-p-element2'),
                     html.Table([
-                        html.Tr([html.Td(['x']), html.Td(id='square1')]),
-                        html.Tr([html.Td(['x']), html.Td(id='cube1')])]),
-                    html.P([html.Br(),html.Br()])],
+                        html.Tr([html.Td(id="neg_cor1")]),
+                        html.Tr([html.Td(id="neg_cor2")])]),
+                    html.P([html.Br()])],
                      style={'font-family':'Arial','width':'50%',
                             'display':'inline-block',
                             'height':'0.4*h_max'}),
@@ -96,18 +123,7 @@ app.layout = html.Div([
                             'display':'inline-block'})
             ],
             style={'width':'50%','height':'200','display':'inline-block'}),
-        ]),
-        # for debugging purposes
-        #html.Div(className="row", children=[
-        #    html.Div([
-        #        dcc.Markdown("""
-        #            **Click Data (for debugging purposes)**
-
-        #            Click a dot in the scatter plot.
-        #        """),
-        #        html.Pre(id="click_data")
-        #    ], className="three columns")
-        #])
+        ])
 ])
 
 # map callback
@@ -243,22 +259,63 @@ def update_hist_bar(dropdown_val, map_hover):
 
     return fig_hist_bar
 
+# compute correlations offline and store
+correlations = dict()
+correlation_vars = dict()
+pos_corr = dict()
+pos_corr_vars = dict()
+neg_corr = dict()
+neg_corr_vars = dict()
+for var1 in df_merged.columns:
+    if var1 in quant_vars:
+        correlations[var1] = []
+        correlation_vars[var1] = []
+        pos1, pos2, neg1, neg2 = None, None, None, None
+        pos1_val, pos2_val, neg1_val, neg2_val = -np.inf, -np.inf, np.inf, np.inf
+        for var2 in df_merged.columns:
+            if var2 in quant_vars:
+                if var1 != var2:
+                    corr_val = round(df_merged[var1].corr(df_merged[var2]), 2)
+                    correlations[var1].append(corr_val)
+                    correlation_vars[var1].append(var2)
+                    if corr_val < neg1_val:
+                        neg2, neg2_val = neg1, neg1_val
+                        neg1, neg1_val = var2, corr_val
+                    elif corr_val < neg2_val:
+                        neg2, neg2_val = var2, corr_val
+
+                    if corr_val > pos1_val:
+                        pos2, pos2_val = pos1, pos1_val
+                        pos1, pos1_val = var2, corr_val
+                    elif corr_val > pos2_val:
+                        pos2, pos2_val = var2, corr_val
+
+                    neg_corr[var1] = [neg1_val, neg2_val]
+                    neg_corr_vars[var1] = [neg1, neg2]
+                    pos_corr[var1] = [pos1_val, pos2_val]
+                    pos_corr_vars[var1] = [pos1, pos2]
+
 # text callback
+@app.callback(
+    Output("pos_cor1", "children"),
+    Output("pos_cor2", "children"),
+    Output("neg_cor1", "children"),
+    Output("neg_cor2", "children"),
+    Input("drop-1", "value")
+)
+def update_text(dropdown_val):
+    if dropdown_val not in quant_vars:
+        pos1 = "select a quantitative variable to see correlation"
+        pos2 = ""
+        neg1 = "select a quantitative variable to see correlation"
+        neg2 = ""
+    else:
+        pos1 = pos_corr_vars[dropdown_val][0]+": "+str(pos_corr[dropdown_val][0])
+        pos2 = pos_corr_vars[dropdown_val][1]+": "+str(pos_corr[dropdown_val][1])
+        neg1 = neg_corr_vars[dropdown_val][0]+": "+str(neg_corr[dropdown_val][0])
+        neg2 = neg_corr_vars[dropdown_val][1]+": "+str(neg_corr[dropdown_val][1])
 
-# for debugging purposes
-#@app.callback(
-#    Output("hover_data", "children"),
-#    Input("map", "hoverData")
-#)
-#def display_hover_data(map_hover):
-#    return json.dumps(map_hover, indent=2)
-#@app.callback(
-#    Output("click_data", "children"),
-#    Input("scatter", "clickData")
-#)
-#def display_click_data(scatter_click):
-#    return json.dumps(scatter_click, indent=2)
-
+    return pos1, pos2, neg1, neg2
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
